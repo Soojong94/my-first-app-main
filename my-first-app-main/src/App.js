@@ -1,5 +1,6 @@
 import './App.css';
 import { useRef, useState, forwardRef } from 'react';
+import Map from './Map'; // Map 컴포넌트 import
 
 function App() {
   const [showRouteSearch, setShowRouteSearch] = useState(false);
@@ -13,16 +14,20 @@ function App() {
     setShowRouteSearch(true);
   };
 
+  const goBackToMain = () => {
+    setShowRouteSearch(false);
+  };
+
   return (
     <div>
       {!showRouteSearch && <Start onStartClick={scrollToMain} />}
       {!showRouteSearch && <Main ref={mainRef} onRouteSearchClick={showRouteSearchPage} />}
-      {showRouteSearch && <RouteSearch />}
+      {showRouteSearch && <RouteSearch onBack={goBackToMain} />}
     </div>
   );
 }
 
-function Start({ onStartClick }) { 
+function Start({ onStartClick }) {
   return (
     <div className='start'>
       <h1 className='title'>Journey Flow</h1>
@@ -47,10 +52,14 @@ const Main = forwardRef(({ onRouteSearchClick }, ref) => {
   );
 });
 
-function RouteSearch() {
+function RouteSearch({ onBack }) {
   return (
     <div className='route-search'>
-      {/* 여기에 지도 API 붙이기 (예: 카카오 지도, 구글 지도 등) */}
+      <div className="header">
+        <button className="back-button" onClick={onBack}>⬅ 뒤로가기</button>
+        <h1>경로 검색</h1>
+      </div>
+      <Map /> {/* Map 컴포넌트 사용 */}
     </div>
   );
 }
