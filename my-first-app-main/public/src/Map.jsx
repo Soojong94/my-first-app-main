@@ -171,7 +171,7 @@ const Map = () => {
     }
 
     try {
-      const REST_API_KEY = 'c4fa2431a373bfca8080c7097bdb99ee'; // 보안상 서버에서 관리 권장
+      const REST_API_KEY = ''; // 보안상 서버에서 관리 권장
       const url = 'https://apis-navi.kakaomobility.com/v1/directions';
 
       const origin = `${pointObj.startPoint.lng},${pointObj.startPoint.lat}`;
