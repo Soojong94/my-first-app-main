@@ -1,99 +1,187 @@
 .map-container {
   display: flex;
   width: 100%;
-  height: 100vh;
-  background-color: #f5f5f5;
-}
-
-.control-panel {
-  width: 300px;
-  padding: 20px;
-  background-color: white;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  overflow-y: auto;
+  height: calc(100vh - 60px);
+  /* 헤더 높이 제외 */
+  position: relative;
 }
 
 .map {
   flex: 1;
-  min-height: 100%;
+  height: 100%;
 }
 
-.map-selection {
-  margin-bottom: 20px;
-  border: 1px solid #eee;
-  padding: 15px;
-  border-radius: 8px;
-  background-color: #f9f9f9;
+.search-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 360px;
+  height: 100%;
+  background-color: white;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  overflow-y: auto;
+  z-index: 10;
 }
 
-.map-selection h3 {
+.search-panel h2 {
   margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 24px;
+  color: #333;
+  text-align: center;
+}
+
+.search-panel h3 {
+  font-size: 18px;
+  margin-top: 20px;
   margin-bottom: 10px;
-  font-size: 16px;
   color: #333;
 }
 
-.button-group {
+.search-form {
   display: flex;
-  gap: 10px;
+  margin-bottom: 15px;
 }
 
-.selection-button {
+.search-form input {
   flex: 1;
-  padding: 10px;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px 0 0 4px;
+  font-size: 14px;
+}
+
+.search-form button {
+  padding: 10px 15px;
+  background-color: #3396ff;
+  color: white;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.search-form button:hover {
+  background-color: #2980b9;
+}
+
+.search-form button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.search-results ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  border-radius: 4px;
+}
+
+.search-results li {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+}
+
+.search-results li:last-child {
+  border-bottom: none;
+}
+
+.place-info {
+  margin-bottom: 8px;
+  cursor: pointer;
+  /* 클릭 가능함을 나타내는 커서 추가 */
+  padding: 5px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.place-info:hover {
+  background-color: #f5f5f5;
+  /* 호버 효과 추가 */
+}
+
+.place-info strong {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.place-info p {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.place-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.place-actions button {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 12px;
   background-color: #f0f0f0;
   border: 1px solid #ddd;
   border-radius: 4px;
   cursor: pointer;
-  font-weight: bold;
-  transition: all 0.3s ease;
 }
 
-.selection-button:hover {
+.place-actions button:hover {
   background-color: #e0e0e0;
 }
 
-.selection-button.active {
+.location-status {
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 15px;
+}
+
+.location-point {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.location-point:last-child {
+  margin-bottom: 0;
+}
+
+.point-label {
+  font-weight: bold;
+  margin-right: 8px;
+  width: 60px;
+}
+
+.point-value {
+  flex: 1;
+  color: #666;
+}
+
+.set-button {
+  padding: 6px 10px;
+  font-size: 12px;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.set-button.active {
   background-color: #4dabf7;
   color: white;
   border-color: #339af0;
 }
 
-.selection-instruction {
-  margin-top: 10px;
-  padding: 10px;
-  background-color: #e3fafc;
-  border-radius: 4px;
-  color: #0b7285;
-  text-align: center;
-  font-weight: bold;
-}
-
-.location-buttons {
-  margin-bottom: 20px;
-}
-
-.location-buttons h3 {
-  margin-bottom: 10px;
-  font-size: 16px;
-  color: #333;
-}
-
-.location-buttons button {
-  display: block;
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: #f9f9f9;
-  cursor: pointer;
-  text-align: left;
-  transition: background-color 0.3s;
-}
-
-.location-buttons button:hover {
-  background-color: #e9e9e9;
+.set-button:hover {
+  background-color: #e0e0e0;
 }
 
 .action-buttons {
@@ -122,26 +210,6 @@
   cursor: not-allowed;
 }
 
-.test-button {
-  width: 100%;
-  padding: 12px;
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.test-button:hover {
-  background-color: #5a6268;
-}
-
-.test-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
-}
-
 .reset-button {
   width: 100%;
   padding: 12px;
@@ -155,4 +223,22 @@
 
 .reset-button:hover {
   background-color: #c0392b;
+}
+
+/* 반응형 스타일 */
+@media screen and (max-width: 768px) {
+  .map-container {
+    flex-direction: column;
+  }
+
+  .search-panel {
+    position: relative;
+    width: 100%;
+    height: auto;
+    max-height: 50vh;
+  }
+
+  .map {
+    height: 50vh;
+  }
 }

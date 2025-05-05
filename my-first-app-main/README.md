@@ -1,70 +1,98 @@
-# Getting Started with Create React App
+# Journey Flow - 경로 검색 웹 애플리케이션
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Journey Flow는 사용자에게 지도 기반 경로 검색 서비스를 제공하는 리액트 웹 애플리케이션입니다. 카카오맵 API를 활용하여 사용자가 출발지와 목적지를 설정하고 경로를 확인할 수 있는 기능을 제공합니다.
 
-## Available Scripts
+## 프로젝트 기능
 
-In the project directory, you can run:
+### 1. 메인 인터페이스
+- 시작 페이지: 앱 소개 및 시작하기 버튼
+- 메인 메뉴: 경로검색, AI 일정, 게시판 등 기능 선택
 
-### `npm start`
+### 2. 경로 검색 기능
+- 카카오맵 API 기반 지도 표시
+- 출발지 및 목적지 설정
+  - 지도에서 직접 클릭하여 선택
+  - 검색을 통한 장소 선택
+  - 현재 위치 사용
+- 경로 탐색 및 시각화
+  - 카카오 모빌리티 API를 통한 실제 경로 계산
+  - 폴리라인을 사용한 경로 시각화
+  - 경로 초기화 및 재설정
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 기술 스택
+- React.js - 프론트엔드 프레임워크
+- Kakao Maps API - 지도 및 장소 검색
+- Kakao Mobility API - 경로 계산
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 주요 동작 원리
 
-### `npm test`
+### 애플리케이션 구조
+1. **App.js**: 메인 컴포넌트로 페이지 상태 관리 및 전환 로직을 포함
+   - 시작 페이지(Start) → 메인 메뉴(Main) → 경로 검색(RouteSearch) 페이지 흐름
+   
+2. **Map.jsx**: 카카오맵 통합 및 경로 검색 핵심 기능 구현
+   - 지도 초기화 및 이벤트 처리
+   - 장소 검색 및 결과 처리
+   - 출발지/목적지 선택 및 마커 표시
+   - 경로 계산 및 폴리라인 그리기
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 핵심 기능 동작 과정
 
-### `npm run build`
+#### 지도 초기화
+1. 컴포넌트 마운트 시 카카오맵 객체를 생성하고 지도 컨테이너에 렌더링
+2. 지도 클릭 이벤트 리스너 등록 (출발지/목적지 선택용)
+3. 줌 컨트롤 추가
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+#### 장소 검색
+1. 사용자가 검색어 입력 및 검색 버튼 클릭
+2. 카카오 Places 서비스 API를 통해 키워드 검색 실행
+3. 검색 결과 리스트 표시
+4. 사용자가 결과에서 출발지/목적지로 설정 가능
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+#### 출발지/목적지 설정
+1. 직접 지도 클릭, 검색 결과 선택 또는 현재 위치 버튼으로 설정
+2. 선택된 위치에 마커 생성 및 표시 (출발지: 빨간색, 목적지: 파란색)
+3. 이미 마커가 있는 경우 기존 마커 제거
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+#### 경로 계산 및 표시
+1. 출발지와 목적지가 모두 설정된 상태에서 경로 찾기 버튼 클릭
+2. 카카오 모빌리티 API에 요청하여 경로 데이터 가져오기
+3. 응답받은 좌표 데이터로 폴리라인 객체 생성
+4. 지도에 폴리라인 표시
+5. API 호출 실패 시 직선 경로로 대체 (폴백)
 
-### `npm run eject`
+#### 초기화 기능
+- 초기화 버튼 클릭 시 모든 마커와 경로 제거
+- 검색 결과 및 관련 상태 초기화
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## 설치 및 실행 방법
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### 필요 조건
+- Node.js (버전 14 이상)
+- npm 또는 yarn
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### 설치 과정
+1. 저장소 클론
+```bash
+git clone https://github.com/your-username/journey-flow.git
+cd journey-flow
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+2. 의존성 패키지 설치
+```bash
+npm install
+# 또는
+yarn install
+```
 
-## Learn More
+3. 개발 서버 실행
+```bash
+npm start
+# 또는
+yarn start
+```
+- 브라우저에서 http://localhost:3000 으로 접속하여 애플리케이션 사용
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 참고사항
+- 카카오맵 API 키와 모빌리티 API 키는 실제 서비스 배포 시 환경 변수나 서버 측에서 관리해야 합니다.
+- 현재 버전은 프론트엔드만 구현되어 있으며, 보안과 확장성을 위해 백엔드 구현이 필요할 수 있습니다.

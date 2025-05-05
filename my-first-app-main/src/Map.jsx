@@ -4,6 +4,8 @@ import './Map.css';
 const { kakao } = window;
 
 const Map = () => {
+  // 지도 객체를 저장할 useRef 추가
+  const mapRef = useRef(null);
   const [map, setMap] = useState(null);
   const [pointObj, setPointObj] = useState({
     startPoint: { marker: null, lat: null, lng: null },
@@ -13,39 +15,28 @@ const Map = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
-  const [isSettingStart, setIsSettingStart] = useState(false);
-  const [isSettingEnd, setIsSettingEnd] = useState(false);
 
-  // 지도 초기화
+  // 지도 초기화 - 컴포넌트 마운트 시에만 실행
   useEffect(() => {
     const mapContainer = document.getElementById('map');
+    if (!mapContainer) return;
+
     const mapOptions = {
       center: new kakao.maps.LatLng(35.1575, 126.8476), // 광주 동구 중심 좌표
       level: 3 // 지도의 확대 레벨
     };
 
+    // 지도 객체 생성 및 저장
     const kakaoMap = new kakao.maps.Map(mapContainer, mapOptions);
 
     // 지도 컨트롤 추가
     const zoomControl = new kakao.maps.ZoomControl();
     kakaoMap.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
 
-    // 지도 클릭 이벤트 등록
-    kakao.maps.event.addListener(kakaoMap, 'click', function (mouseEvent) {
-      // 클릭한 위도, 경도 정보를 가져옵니다
-      const latlng = mouseEvent.latLng;
-
-      if (isSettingStart) {
-        setPoint({ lat: latlng.getLat(), lng: latlng.getLng() }, 'startPoint');
-        setIsSettingStart(false);
-      } else if (isSettingEnd) {
-        setPoint({ lat: latlng.getLat(), lng: latlng.getLng() }, 'endPoint');
-        setIsSettingEnd(false);
-      }
-    });
-
+    // 생성된 지도 객체를 상태와 ref 모두에 저장
     setMap(kakaoMap);
-  }, []);
+    mapRef.current = kakaoMap;
+  }, []); // 컴포넌트 마운트 시에만 실행
 
   // pointObj가 변경될 때마다 마커 업데이트
   useEffect(() => {
@@ -84,14 +75,21 @@ const Map = () => {
     });
   };
 
+  // 검색 결과 항목 클릭 시 지도 이동
+  const moveToPlace = (place) => {
+    const lat = parseFloat(place.y);
+    const lng = parseFloat(place.x);
+
+    // 해당 위치로 지도 중심 이동
+    panTo({ lat, lng });
+  };
+
   // 선택한 검색 결과를 출발지/목적지로 설정
   const selectSearchResult = (place, pointType) => {
     const lat = parseFloat(place.y);
     const lng = parseFloat(place.x);
 
     setPoint({ lat, lng }, pointType);
-    setSearchResults([]);
-    setSearchKeyword('');
 
     // 선택한 위치로 지도 중심 이동
     panTo({ lat, lng });
@@ -99,15 +97,15 @@ const Map = () => {
 
   // 지도 중심 부드럽게 이동
   function panTo({ lat, lng }) {
-    if (!map) return;
+    if (!mapRef.current) return;
 
     const moveLatLon = new kakao.maps.LatLng(lat, lng);
-    map.panTo(moveLatLon);
+    mapRef.current.panTo(moveLatLon);
   }
 
   // 출발지 또는 목적지 설정
   function setPoint({ lat, lng }, pointType) {
-    if (!map) return;
+    if (!mapRef.current) return;
 
     // 마커 이미지 설정 (출발지는 빨간색, 목적지는 파란색)
     const imageSrc = pointType === 'startPoint'
@@ -149,17 +147,8 @@ const Map = () => {
           // 현재 위치로 지도 이동
           panTo({ lat, lng });
 
-          // 선택한 출발지/목적지 설정 상태에 따라 마커 설정
-          if (isSettingStart) {
-            setPoint({ lat, lng }, 'startPoint');
-            setIsSettingStart(false);
-          } else if (isSettingEnd) {
-            setPoint({ lat, lng }, 'endPoint');
-            setIsSettingEnd(false);
-          } else {
-            // 기본적으로 출발지로 설정
-            setPoint({ lat, lng }, 'startPoint');
-          }
+          // 기본적으로 출발지로 설정
+          setPoint({ lat, lng }, 'startPoint');
         },
         (error) => {
           console.error('현재 위치를 가져오는데 실패했습니다:', error);
@@ -173,7 +162,7 @@ const Map = () => {
 
   // 카카오 모빌리티 API를 사용하여 자동차 경로 가져오기
   async function getCarDirection() {
-    if (!map) return;
+    if (!mapRef.current) return;
     if (!pointObj.startPoint.lat || !pointObj.endPoint.lat) {
       alert('출발지와 목적지를 모두 설정해주세요.');
       return;
@@ -241,13 +230,13 @@ const Map = () => {
       });
 
       // 지도에 폴리라인 표시
-      newPolyline.setMap(map);
+      newPolyline.setMap(mapRef.current);
       setPolyline(newPolyline);
 
       // 경로가 모두 보이도록 지도 영역 조정
       const bounds = new kakao.maps.LatLngBounds();
       linePath.forEach(point => bounds.extend(point));
-      map.setBounds(bounds);
+      mapRef.current.setBounds(bounds);
 
     } catch (error) {
       console.error('경로 가져오기 오류:', error);
@@ -259,7 +248,7 @@ const Map = () => {
 
   // 직선 경로 표시 (API 호출 실패 시 폴백 또는 테스트용)
   function showStraightRoute() {
-    if (!map || !pointObj.startPoint.lat || !pointObj.endPoint.lat) {
+    if (!mapRef.current || !pointObj.startPoint.lat || !pointObj.endPoint.lat) {
       alert('출발지와 목적지를 모두 설정해주세요.');
       return;
     }
@@ -285,14 +274,14 @@ const Map = () => {
     });
 
     // 지도에 폴리라인 표시
-    newPolyline.setMap(map);
+    newPolyline.setMap(mapRef.current);
     setPolyline(newPolyline);
 
     // 모든 마커와 경로가 보이도록 지도 영역 조정
     const bounds = new kakao.maps.LatLngBounds();
     bounds.extend(new kakao.maps.LatLng(pointObj.startPoint.lat, pointObj.startPoint.lng));
     bounds.extend(new kakao.maps.LatLng(pointObj.endPoint.lat, pointObj.endPoint.lng));
-    map.setBounds(bounds);
+    mapRef.current.setBounds(bounds);
   }
 
   // 모든 마커와 경로 초기화
@@ -317,8 +306,6 @@ const Map = () => {
     setPolyline(null);
     setSearchResults([]);
     setSearchKeyword('');
-    setIsSettingStart(false);
-    setIsSettingEnd(false);
   };
 
   return (
@@ -346,7 +333,7 @@ const Map = () => {
             <ul>
               {searchResults.map((place, index) => (
                 <li key={index}>
-                  <div className="place-info">
+                  <div className="place-info" onClick={() => moveToPlace(place)}>
                     <strong>{place.place_name}</strong>
                     <p>{place.address_name}</p>
                   </div>
@@ -372,15 +359,6 @@ const Map = () => {
               <span className="point-value">
                 {pointObj.startPoint.lat ? '설정됨' : '미설정'}
               </span>
-              <button
-                className={`set-button ${isSettingStart ? 'active' : ''}`}
-                onClick={() => {
-                  setIsSettingStart(!isSettingStart);
-                  setIsSettingEnd(false);
-                }}
-              >
-                {isSettingStart ? '선택 중...' : '지도에서 선택'}
-              </button>
             </div>
 
             <div className="location-point">
@@ -388,15 +366,6 @@ const Map = () => {
               <span className="point-value">
                 {pointObj.endPoint.lat ? '설정됨' : '미설정'}
               </span>
-              <button
-                className={`set-button ${isSettingEnd ? 'active' : ''}`}
-                onClick={() => {
-                  setIsSettingEnd(!isSettingEnd);
-                  setIsSettingStart(false);
-                }}
-              >
-                {isSettingEnd ? '선택 중...' : '지도에서 선택'}
-              </button>
             </div>
           </div>
 
