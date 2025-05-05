@@ -1,0 +1,82 @@
+.start {
+  position: relative; 
+  width: 100%;   
+  height: 100vh;  
+  background-color: lightyellow;
+}
+
+.title {
+  position: absolute;
+  top: 80px;
+  left: 60px;
+  font-size: 36px;
+}
+
+.description {
+  position: absolute;
+  top: 300px;
+  right: 150px;
+  font-size: 18px;
+}
+
+.button-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+button {
+  text-align: center;
+  padding: 10px 100px; 
+  font-size: 15px;    
+  margin-top: 500px;  
+}
+
+.main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: lightblue;
+}
+
+.grid-container {
+  display: grid;                 
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;   
+  gap: 10px;                   
+  width: 80%;                 
+  height: 80%;                
+}
+
+.grid-item {
+  display: flex;                 
+  justify-content: center;     
+  align-items: center;        
+  font-size: 24px;          
+  font-weight: bold;        
+  border-radius: 10px;         
+}
+
+.item1 {
+  background-color: lightpink;    
+}
+.item2 {
+  background-color: lightgreen;  
+}  
+.item3 {
+  background-color: lightgray;  
+}
+.item4 {
+  background-color: lightgoldenrodyellow;    
+}
+
+.route-search {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: 
+}
+
+
