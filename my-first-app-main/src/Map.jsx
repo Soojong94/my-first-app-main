@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import './Map.css';
 
 const { kakao } = window;
@@ -10,6 +10,9 @@ const Map = () => {
     endPoint: { marker: null, lat: null, lng: null }
   });
   const [polyline, setPolyline] = useState(null);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
   const [isSettingStart, setIsSettingStart] = useState(false);
   const [isSettingEnd, setIsSettingEnd] = useState(false);
 
@@ -22,6 +25,10 @@ const Map = () => {
     };
 
     const kakaoMap = new kakao.maps.Map(mapContainer, mapOptions);
+
+    // 지도 컨트롤 추가
+    const zoomControl = new kakao.maps.ZoomControl();
+    kakaoMap.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
 
     // 지도 클릭 이벤트 등록
     kakao.maps.event.addListener(kakaoMap, 'click', function (mouseEvent) {
@@ -38,7 +45,7 @@ const Map = () => {
     });
 
     setMap(kakaoMap);
-  }, [isSettingStart, isSettingEnd]);
+  }, []);
 
   // pointObj가 변경될 때마다 마커 업데이트
   useEffect(() => {
@@ -50,6 +57,45 @@ const Map = () => {
       }
     }
   }, [pointObj, map]);
+
+  // 장소 검색 기능
+  const searchPlaces = () => {
+    if (!map || !searchKeyword.trim()) {
+      alert('검색어를 입력하세요!');
+      return;
+    }
+
+    setSearching(true);
+    setSearchResults([]);
+
+    const places = new kakao.maps.services.Places();
+
+    // 키워드로 장소 검색
+    places.keywordSearch(searchKeyword, (result, status) => {
+      if (status === kakao.maps.services.Status.OK) {
+        console.log('검색 결과:', result);
+        setSearchResults(result);
+      } else if (status === kakao.maps.services.Status.ZERO_RESULT) {
+        alert('검색 결과가 존재하지 않습니다.');
+      } else if (status === kakao.maps.services.Status.ERROR) {
+        alert('검색 중 오류가 발생했습니다.');
+      }
+      setSearching(false);
+    });
+  };
+
+  // 선택한 검색 결과를 출발지/목적지로 설정
+  const selectSearchResult = (place, pointType) => {
+    const lat = parseFloat(place.y);
+    const lng = parseFloat(place.x);
+
+    setPoint({ lat, lng }, pointType);
+    setSearchResults([]);
+    setSearchKeyword('');
+
+    // 선택한 위치로 지도 중심 이동
+    panTo({ lat, lng });
+  };
 
   // 지도 중심 부드럽게 이동
   function panTo({ lat, lng }) {
@@ -63,10 +109,7 @@ const Map = () => {
   function setPoint({ lat, lng }, pointType) {
     if (!map) return;
 
-    // 지도 중심 이동하지 않음 (이 부분 제거)
-    // panTo({ lat, lng });
-
-    // 마커 이미지 설정 (출발지는 파란색, 목적지는 빨간색)
+    // 마커 이미지 설정 (출발지는 빨간색, 목적지는 파란색)
     const imageSrc = pointType === 'startPoint'
       ? '//t1.daumcdn.net/localimg/localimages/07/mapapidoc/red_b.png'
       : '//t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_b.png';
@@ -94,6 +137,39 @@ const Map = () => {
       setPolyline(null);
     }
   }
+
+  // 현재 위치 가져오기
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          // 현재 위치로 지도 이동
+          panTo({ lat, lng });
+
+          // 선택한 출발지/목적지 설정 상태에 따라 마커 설정
+          if (isSettingStart) {
+            setPoint({ lat, lng }, 'startPoint');
+            setIsSettingStart(false);
+          } else if (isSettingEnd) {
+            setPoint({ lat, lng }, 'endPoint');
+            setIsSettingEnd(false);
+          } else {
+            // 기본적으로 출발지로 설정
+            setPoint({ lat, lng }, 'startPoint');
+          }
+        },
+        (error) => {
+          console.error('현재 위치를 가져오는데 실패했습니다:', error);
+          alert('현재 위치를 가져오는데 실패했습니다.');
+        }
+      );
+    } else {
+      alert('이 브라우저에서는 위치 정보를 지원하지 않습니다.');
+    }
+  };
 
   // 카카오 모빌리티 API를 사용하여 자동차 경로 가져오기
   async function getCarDirection() {
@@ -137,9 +213,6 @@ const Map = () => {
       }
 
       const data = await response.json();
-
-      // 테스트 목적으로 콘솔에 응답 데이터 출력
-      console.log('API 응답 데이터:', data);
 
       // 경로를 위한 좌표 배열 생성
       const linePath = [];
@@ -222,105 +295,136 @@ const Map = () => {
     map.setBounds(bounds);
   }
 
-  // 샘플 위치 데이터
-  const sampleLocations = [
-    { name: '광주 동구청', lat: 35.1458, lng: 126.9236 },
-    { name: '국립아시아문화전당', lat: 35.1398, lng: 126.9175 },
-    { name: '충장로 상점가', lat: 35.1489, lng: 126.9138 },
-    { name: '5·18 민주광장', lat: 35.1474, lng: 126.9141 }
-  ];
+  // 모든 마커와 경로 초기화
+  const resetAll = () => {
+    // 모든 마커 제거
+    for (const point in pointObj) {
+      if (pointObj[point].marker !== null) {
+        pointObj[point].marker.setMap(null);
+      }
+    }
+
+    // 경로 제거
+    if (polyline) {
+      polyline.setMap(null);
+    }
+
+    // 상태 초기화
+    setPointObj({
+      startPoint: { marker: null, lat: null, lng: null },
+      endPoint: { marker: null, lat: null, lng: null }
+    });
+    setPolyline(null);
+    setSearchResults([]);
+    setSearchKeyword('');
+    setIsSettingStart(false);
+    setIsSettingEnd(false);
+  };
 
   return (
     <div className="map-container">
-      <div className="control-panel">
-        <h2>경로 검색</h2>
+      <div id="map" className="map"></div>
+      <div className="search-panel">
+        <h2>장소 검색</h2>
 
-        <div className="map-selection">
-          <h3>지도에서 직접 선택</h3>
-          <div className="button-group">
-            <button
-              className={`selection-button ${isSettingStart ? 'active' : ''}`}
-              onClick={() => {
-                setIsSettingStart(true);
-                setIsSettingEnd(false);
-              }}
-            >
-              출발지 선택
-            </button>
-            <button
-              className={`selection-button ${isSettingEnd ? 'active' : ''}`}
-              onClick={() => {
-                setIsSettingEnd(true);
-                setIsSettingStart(false);
-              }}
-            >
-              목적지 선택
-            </button>
+        <div className="search-form">
+          <input
+            type="text"
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            placeholder="장소를 입력하세요"
+            onKeyPress={(e) => e.key === 'Enter' && searchPlaces()}
+          />
+          <button onClick={searchPlaces} disabled={searching}>
+            {searching ? '검색 중...' : '검색하기'}
+          </button>
+        </div>
+
+        {searchResults.length > 0 && (
+          <div className="search-results">
+            <h3>검색 결과</h3>
+            <ul>
+              {searchResults.map((place, index) => (
+                <li key={index}>
+                  <div className="place-info">
+                    <strong>{place.place_name}</strong>
+                    <p>{place.address_name}</p>
+                  </div>
+                  <div className="place-actions">
+                    <button onClick={() => selectSearchResult(place, 'startPoint')}>
+                      출발지로 설정
+                    </button>
+                    <button onClick={() => selectSearchResult(place, 'endPoint')}>
+                      목적지로 설정
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
-          {(isSettingStart || isSettingEnd) && (
-            <div className="selection-instruction">
-              지도에서 {isSettingStart ? '출발지' : '목적지'}를 클릭하세요
+        )}
+
+        <div className="route-actions">
+          <h3>경로 찾기</h3>
+          <div className="location-status">
+            <div className="location-point">
+              <span className="point-label">출발지:</span>
+              <span className="point-value">
+                {pointObj.startPoint.lat ? '설정됨' : '미설정'}
+              </span>
+              <button
+                className={`set-button ${isSettingStart ? 'active' : ''}`}
+                onClick={() => {
+                  setIsSettingStart(!isSettingStart);
+                  setIsSettingEnd(false);
+                }}
+              >
+                {isSettingStart ? '선택 중...' : '지도에서 선택'}
+              </button>
             </div>
-          )}
-        </div>
 
-        <div className="location-buttons">
-          <h3>추천 출발지</h3>
-          {sampleLocations.map((location, index) => (
+            <div className="location-point">
+              <span className="point-label">목적지:</span>
+              <span className="point-value">
+                {pointObj.endPoint.lat ? '설정됨' : '미설정'}
+              </span>
+              <button
+                className={`set-button ${isSettingEnd ? 'active' : ''}`}
+                onClick={() => {
+                  setIsSettingEnd(!isSettingEnd);
+                  setIsSettingStart(false);
+                }}
+              >
+                {isSettingEnd ? '선택 중...' : '지도에서 선택'}
+              </button>
+            </div>
+          </div>
+
+          <div className="action-buttons">
             <button
-              key={`start-${index}`}
-              onClick={() => setPoint({ lat: location.lat, lng: location.lng }, 'startPoint')}
+              className="route-button"
+              onClick={getCurrentLocation}
             >
-              {location.name}
+              현재 위치
             </button>
-          ))}
-        </div>
 
-        <div className="location-buttons">
-          <h3>추천 목적지</h3>
-          {sampleLocations.map((location, index) => (
             <button
-              key={`end-${index}`}
-              onClick={() => setPoint({ lat: location.lat, lng: location.lng }, 'endPoint')}
+              className="route-button"
+              onClick={getCarDirection}
+              disabled={!pointObj.startPoint.lat || !pointObj.endPoint.lat}
             >
-              {location.name}
+              경로 찾기
             </button>
-          ))}
-        </div>
 
-        <div className="action-buttons">
-          <button
-            className="route-button"
-            onClick={getCarDirection}
-            disabled={!pointObj.startPoint.lat || !pointObj.endPoint.lat}
-          >
-            자동차 경로 검색
-          </button>
-
-          <button
-            className="test-button"
-            onClick={showStraightRoute}
-            disabled={!pointObj.startPoint.lat || !pointObj.endPoint.lat}
-          >
-            직선 경로 보기 (테스트)
-          </button>
-
-          {polyline && (
             <button
               className="reset-button"
-              onClick={() => {
-                if (polyline) {
-                  polyline.setMap(null);
-                  setPolyline(null);
-                }
-              }}
+              onClick={resetAll}
             >
-              경로 초기화
+              초기화
             </button>
-          )}
+          </div>
         </div>
       </div>
-      <div id="map" className="map"></div>
     </div>
   );
 };
