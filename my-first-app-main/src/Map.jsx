@@ -170,7 +170,7 @@ const Map = () => {
 
     try {
       // REST API 키 (실제 서비스에서는 서버에서 관리해야 합니다)
-      const REST_API_KEY = 'c4fa2431a373bfca8080c7097bdb99ee';
+      const REST_API_KEY = '실제 rest api key';
       const url = 'https://apis-navi.kakaomobility.com/v1/directions';
 
       // 출발지와 목적지 좌표 준비
