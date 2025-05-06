@@ -73,7 +73,7 @@ Journey Flow는 사용자에게 지도 기반 경로 검색 서비스를 제공�
 ### 설치 과정
 1. 저장소 클론
 ```bash
-git clone https://github.com/your-username/journey-flow.git
+git clone https://github.com/your-username/my-first-app-main
 cd journey-flow
 ```
 
